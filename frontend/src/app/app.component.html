@@ -1,0 +1,157 @@
+<main class="min-h-screen bg-dark-900 text-gray-100 flex flex-col items-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+  
+  <!-- Background glow effect -->
+  <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-primary-500/20 blur-[120px] rounded-full pointer-events-none"></div>
+
+  <!-- Header Section -->
+  <div class="z-10 w-full max-w-5xl text-center mb-12 animate-fade-in">
+    <h1 class="text-5xl font-extrabold tracking-tight mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-primary-600">
+      Agentic AI Compliance Scanner
+    </h1>
+    <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+      Instantly scan any website for accessibility violations and get actionable, AI-generated code fixes.
+    </p>
+  </div>
+
+  <!-- Search/Input Section -->
+  <div class="z-10 w-full max-w-2xl animate-slide-up">
+    <div class="glass-card p-6 flex flex-col sm:flex-row gap-4 items-center">
+      <input 
+        type="text" 
+        [(ngModel)]="url" 
+        (keyup.enter)="analyze()"
+        placeholder="Enter website URL (e.g., https://example.com)" 
+        class="input-field flex-1"
+        [disabled]="isAnalyzing"
+      >
+      <button 
+        (click)="analyze()" 
+        class="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 whitespace-nowrap"
+        [disabled]="isAnalyzing"
+      >
+        @if (!isAnalyzing) {
+          <span>Analyze Site</span>
+        }
+        @if (isAnalyzing) {
+          <span class="flex items-center gap-2">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Scanning...
+          </span>
+        }
+      </button>
+    </div>
+    
+    <!-- Error Message -->
+    @if (error) {
+      <div class="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-xl text-red-400 text-center animate-fade-in">
+        {{ error }}
+      </div>
+    }
+  </div>
+
+  <!-- Loading State Details -->
+  @if (isAnalyzing) {
+    <div class="z-10 mt-16 flex flex-col items-center justify-center animate-fade-in text-gray-400">
+      <div class="relative w-24 h-24 mb-6">
+        <div class="absolute inset-0 border-t-2 border-primary-500 rounded-full animate-spin"></div>
+        <div class="absolute inset-2 border-r-2 border-primary-400 rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 1.5s;"></div>
+        <div class="absolute inset-4 border-b-2 border-primary-300 rounded-full animate-spin" style="animation-duration: 2s;"></div>
+      </div>
+      <p class="text-lg animate-pulse">Puppeteer is scanning the DOM...</p>
+      <p class="text-sm mt-2">Gemini AI is analyzing the issues and generating code fixes.</p>
+    </div>
+  }
+
+  <!-- Results Dashboard -->
+  @if (results && !isAnalyzing) {
+    <div class="z-10 w-full max-w-5xl mt-12 animate-slide-up">
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+      <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
+        <h3 class="text-gray-400 font-medium mb-1">Page URL</h3>
+        <p class="text-lg text-white font-semibold truncate w-full" title="{{ results.report.pageUrl }}">{{ results.report.pageUrl }}</p>
+      </div>
+      <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
+        <h3 class="text-gray-400 font-medium mb-1">Total Issues</h3>
+        <p class="text-4xl font-bold text-red-400">{{ results.report.issues.length }}</p>
+      </div>
+      <div class="glass-card p-6 flex flex-col items-center justify-center text-center">
+        <h3 class="text-gray-400 font-medium mb-1">AI Fixes Generated</h3>
+        <p class="text-4xl font-bold text-primary-400">{{ results.fixes.length }}</p>
+      </div>
+    </div>
+
+    <!-- No Issues Found -->
+    @if (results.report.issues.length === 0) {
+      <div class="glass-card p-12 text-center">
+        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary-500/20 text-primary-500 mb-4">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h2 class="text-2xl font-bold text-white mb-2">Excellent!</h2>
+        <p class="text-gray-400">No accessibility violations found on this page.</p>
+      </div>
+    }
+
+    <!-- Issues List -->
+    @if (results.report.issues.length > 0) {
+      <div class="space-y-6">
+        <h2 class="text-2xl font-bold text-white mb-6 border-b border-gray-700 pb-4">Detailed Report & AI Fixes</h2>
+        
+        @for (fix of results.fixes; track $index) {
+          <div class="glass-card overflow-hidden group">
+        <!-- Issue Header -->
+        <div class="bg-dark-800/80 p-5 border-b border-white/5 flex flex-col sm:flex-row gap-4 justify-between items-start">
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <span class="px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold rounded-full">Issue #{{ $index + 1 }}</span>
+              <span class="text-sm text-gray-400 font-mono">{{ fix.code }}</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">{{ fix.message }}</h3>
+          </div>
+        </div>
+
+        <!-- Issue Details & Fixes -->
+        <div class="p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          <!-- Current Code -->
+          <div class="space-y-3">
+            <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+              Current DOM
+            </h4>
+            <div class="bg-dark-900 rounded-lg p-4 font-mono text-sm text-gray-300 overflow-x-auto border border-gray-800">
+              <code>{{ fix.context }}</code>
+            </div>
+          </div>
+
+          <!-- Proposed Fix -->
+          <div class="space-y-3">
+            <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wider flex items-center gap-2">
+              <svg class="w-4 h-4 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+              AI Proposed Fix
+            </h4>
+            <div class="bg-dark-900 rounded-lg p-4 font-mono text-sm text-primary-300 overflow-x-auto border border-primary-500/30">
+              <code>{{ fix.proposedFix }}</code>
+            </div>
+          </div>
+
+          <!-- Explanation -->
+          <div class="lg:col-span-2 mt-2">
+            <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-2">Explanation & Strategy</h4>
+            <div class="bg-blue-500/10 border-l-4 border-blue-500 p-4 rounded-r-lg text-blue-100/80 text-sm">
+              {{ fix.explanation }}
+            </div>
+          </div>
+
+        </div>
+          </div>
+        }
+      </div>
+    }
+    </div>
+  }
+
+</main>
